@@ -30,8 +30,8 @@ probably won't be necessary.
 
 ## DIRECTORIES
 * `/code/` The project directory is mounted here, it is also the working dir from within the container
-* `build/` this is where scripts/files go which are run from _within the container_
-* `scripts/` this is where scripts/files go which are run from _outside the container_
+* `build/` this is where scripts/files go which are run from __within the container__
+* `scripts/` this is where scripts/files go which are run from __outside the container__
 * `src/` is where the source code for the python code will go
 
 ## Docker images
