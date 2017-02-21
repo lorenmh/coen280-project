@@ -1,3 +1,3 @@
 #!/bin/bash
-cd ${0%/*}
+cd ${0%/*}/..
 make -C docker/dev
