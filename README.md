@@ -39,3 +39,7 @@ image](https://hub.docker.com/r/lorenmh/coen281-project/).
 
 If you don't want to use docker, you'll want to use Python virtualenv, you will
 need to set this up yourself though.
+
+# Style guidelines
+Let's use flake8 style guidelines? Install the flake8 linter and it will let
+you know what should be changed.
