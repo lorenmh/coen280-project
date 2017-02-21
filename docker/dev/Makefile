@@ -1,6 +1,7 @@
+INAME=lorenmh/coen281-project
 VERSION=0.0.1
 
 all:
-	docker build -t lorenmh/coen280-project:latest -t lorenmh/coen280-project:$(VERSION) .
+	docker build -t $(INAME):latest -t $(INAME):$(VERSION) .
 no-cache:
-	docker build --no-cache -t lorenmh/coen280-project:latest -t lorenmh/coen280-project:$(VERSION) .
+	docker build --no-cache -t $(INAME):latest -t $(INAME):$(VERSION) .
