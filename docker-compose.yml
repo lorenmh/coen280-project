@@ -17,5 +17,7 @@ postgresql:
 dev:
   image: lorenmh/coen281-project:latest
   command: bash -c 'sleep infinity'
+  volumes:
+    - ./:/code
   links:
     - postgresql
