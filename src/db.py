@@ -11,3 +11,4 @@ DB_URI = 'postgresql://%s:%s@%s:%s/%s' % (DB_USER, DB_PASSWORD,
                                           DB_HOST, DB_PORT, DB_NAME)
 
 engine = sqlalchemy.create_engine(DB_URI, echo=True)
+db = engine.connect()
