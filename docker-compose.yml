@@ -1,0 +1,19 @@
+data:
+    image: ubuntu
+    volumes:
+        - /var/lib/postgresql/data
+        - /var/lib/influxdb
+postgresql:
+    image: postgres:9.6.2
+    ports: 
+        - "5432:5432"
+    volumes_from:
+        - data
+    volumes:
+        - ./build/sql/create_db.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+        - POSTGRES_USER=user
+        - POSTGRES_PASSWORD=password
+        - POSTGRES_DB=local
+dev:
+    image: 
