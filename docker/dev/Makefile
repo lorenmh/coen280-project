@@ -1,5 +1,5 @@
 INAME=lorenmh/coen281-project
-VERSION=0.0.1
+VERSION=0.0.2
 
 all:
 	docker build -t $(INAME):latest -t $(INAME):$(VERSION) .

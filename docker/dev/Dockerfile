@@ -16,3 +16,5 @@ RUN pip install -r requirements.txt
 
 RUN mkdir /code
 WORKDIR /code
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
