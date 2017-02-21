@@ -28,7 +28,13 @@ To run the postgresql shell, run `./scripts/psql/psql.sh`, or to run the bash
 shell of the postgresql image, run `./scripts/psql/bash.sh`, though this
 probably won't be necessary.
 
-# Docker images
+## DIRECTORIES
+* `/code/` The project directory is mounted here, it is also the working dir from within the container
+* `build/` this is where scripts/files go which are run from _within the container_
+* `scripts/` this is where scripts/files go which are run from _outside the container_
+* `src/` is where the source code for the python code will go
+
+## Docker images
 Docker will have the binaries / programs required to run everything. Docker is
 not necessary, but keep in mind you'll need to install PostgreSQL (or whatever
 DB we use) natively, as well as all other dependencies (like a psql driver for
