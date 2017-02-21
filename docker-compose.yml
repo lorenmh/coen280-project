@@ -27,3 +27,4 @@ dev:
     - DB_USER=user
     - DB_PASSWORD=password
     - DB_NAME=data
+    - DB_NAME_DEFAULT=local
