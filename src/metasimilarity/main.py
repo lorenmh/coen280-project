@@ -4,6 +4,7 @@ import os
 import praw
 import re
 import sys
+from collections import defaultdict
 
 def setup_praw():
     """Sets up praw and returns the Reddit instance."""
@@ -36,5 +37,48 @@ def wiki_mentions(subreddit, reddit):
 
     return mentions
 
+def get_mod_list(reddit, subreddits):
+    """Get a a list of moderators for each of the subreddits passed in and write to mods.txt."""
+    with open('mods.txt', 'w') as f:
+        for sr in subreddits:
+            f.write('{},{}\n'.format(sr,','.join([m.name for m in reddit.subreddit(sr).moderator()])))
+
+def lcs(string1, string2):
+    answer = ""
+    len1, len2 = len(string1), len(string2)
+    for i in range(len1):
+        match = ''
+        for j in range(len2):
+            if i + j < len1 and string1[i + j] == string2[j]:
+                match += string2[j]
+            else:
+                if (len(match) > len(answer)):
+                    answer = match
+                match = ''
+        if len(match) > len(answer):
+            answer = match
+
+    return answer
+
+def get_affixes(subreddits):
+    d = {}
+    for i in range(len(subreddits)):
+        print(i)
+        for j in range(len(subreddits)):
+            if i == j:
+                continue
+            sequence = lcs(subreddits[i].lower(), subreddits[j].lower())
+
+            if len(sequence) > 1:
+                if sequence in d:
+                    d[sequence] += 1
+                else:
+                    d[sequence] = 1
+    return d
+
 reddit = setup_praw()
-print(wiki_mentions('AskReddit', reddit))
+# get_affixes(get_popular_subreddits()
+with open('affixes.txt', 'w') as f:
+    # for k, v in get_affixes(['ussoccer', 'uksoccer', 'ukpolitics', 'uspolitics']).items():
+    for k, v in get_affixes(get_popular_subreddits()).items():
+        f.write('{}: {}\n'.format(k, v))
