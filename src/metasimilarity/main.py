@@ -60,8 +60,8 @@ def lcs(string1, string2):
 
     return answer
 
-def get_affixes(subreddits):
-    d = {}
+def get_affixes(subreddits, support):
+    first_round = set()
     for i in range(len(subreddits)):
         print(i)
         for j in range(len(subreddits)):
@@ -69,16 +69,28 @@ def get_affixes(subreddits):
                 continue
             sequence = lcs(subreddits[i].lower(), subreddits[j].lower())
 
-            if len(sequence) > 1:
-                if sequence in d:
-                    d[sequence] += 1
-                else:
-                    d[sequence] = 1
-    return d
+            if len(sequence) > 3:
+                first_round.add(sequence)
+
+    first_round = list(first_round)
+    d = {first_round[i]: 0 for i in range(len(first_round))}
+    final_cut = {}
+    for i in range(len(first_round)):
+        print(i)
+        for j in range(len(first_round)):
+            if i == j:
+                continue
+            sequence = lcs(first_round[i], first_round[j])
+            if len(sequence) > 3 and sequence in d:
+                d[sequence] += 1
+
+    for k, v in d.items():
+        if v > support:
+            final_cut[k] = v
+
+    return final_cut
 
 reddit = setup_praw()
-# get_affixes(get_popular_subreddits()
 with open('affixes.txt', 'w') as f:
-    # for k, v in get_affixes(['ussoccer', 'uksoccer', 'ukpolitics', 'uspolitics']).items():
-    for k, v in get_affixes(get_popular_subreddits()).items():
+    for k, v in get_affixes(get_popular_subreddits(), 2).items():
         f.write('{}: {}\n'.format(k, v))
