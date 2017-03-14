@@ -3,6 +3,7 @@ from pyspark.sql import SQLContext, Row
 from pyspark.mllib.linalg import SparseVector
 from pyspark.sql.functions import col, explode
 
+# ascii values of characters
 ord_A = ord('A')
 ord_Z = ord('Z')
 ord_a = ord('a')
@@ -11,6 +12,9 @@ ord_0 = ord('0')
 ord_9 = ord('9')
 ord_sp = ord(' ')
 
+''' returns true if the character is 'allowed'
+this will return true for all [a-zA-Z0-9], false otherwise
+'''
 def allowed_ord(o):
     return (
         (o>=ord_A and o<=ord_Z) or
@@ -18,7 +22,11 @@ def allowed_ord(o):
         (o>=ord_0 and o<=ord_9)
     )
 
+''' returns a list of tokens when given a string
 
+'Hello world Foo? Bar!!!abc.d' -> ['hello', 'world', 'foo', 'bar', 'abc', 'd']
+
+'''
 def tokenizer(d):
     # convert to ascii
     ords = [ord(c) for c in d]
@@ -39,6 +47,12 @@ def tokenizer(d):
         accumulator.append(''.join(chr(o) for o in ords[start_index:len_ords]))
     return accumulator
 
+
+''' given an 'n' (n-gram size) and a list of tokens l, returns the
+list of ngrams, tokens delimited by space:
+['hello', 'world', 'foo', 'bar', 'abc', 'd'] -> n=2
+['hello world', 'world foo', 'foo bar', 'bar abc', 'abc d']
+'''
 def ntoken(n, l):
     len_l = len(l)
     if len_l == 0:
@@ -52,12 +66,19 @@ def ntoken(n, l):
         accumulator.append(' '.join(l[i:i+n]))
     return accumulator
 
+'''
+You dont need to run the stuff below here. You can jump straight to loading
+the subreddit_ngram_indices / subreddit_user_indices
+'''
 df = sqlContext.read.json('hdfs:///user/lhoward/posts_2016_filtered.json')
 
-#subreddit_all_indices.write.json('hdfs:///user/lhoward/posts_ngram_indices.json')
-#subreddit_ngram_indices.write.json('hdfs:///user/lhoward/posts_ngrams.json')
-#df = sqlContext.read.json('hdfs:///user/lhoward/posts_ngrams.json')
+''' converts a dataframe with all of the post information into a subreddit id
+and the list of tokens in the post:
 
+Row(subreddit='funny', title='Foo bar baz!', author='bob', num_comment=123, ...)
+->
+Row(subreddit='funny', tokens=['foo', 'bar', 'baz'])
+'''
 subreddit_tokens = (
     df
         .select('subreddit', 'title')
@@ -65,6 +86,11 @@ subreddit_tokens = (
         .toDF()
 )
 
+''' converts a dataframe with tokens into ngrams:
+Row(subreddit='funny', tokens=['foo', 'bar', 'baz'])
+->
+Row(subreddit='funny', ngrams=['foo bar', 'bar baz'])
+'''
 subreddit_ngrams = (
     subreddit_tokens
         .select('subreddit', 'tokens')
@@ -72,6 +98,11 @@ subreddit_ngrams = (
         .toDF()
 )
 
+''' basically selects just the subreddit and user id:
+Row(subreddit='funny', title='Foo bar baz!', author='bob', num_comment=123, ...)
+->
+Row(subreddit='funny', user='bob')
+'''
 subreddit_users = (
     df
         .select(
@@ -80,6 +111,12 @@ subreddit_users = (
         )
 )
 
+''' expands (or in pyspark 'explodes') the ngrams
+Row(subreddit='funny', ngrams=['foo bar', 'bar baz'])
+->
+Row('subreddit='funny', ngram='foo bar')
+Row('subreddit='funny', ngram='bar baz')
+'''
 subreddit_ngrams_exploded = (
     subreddit_ngrams
         .select(
@@ -90,12 +127,28 @@ subreddit_ngrams_exploded = (
         .distinct()
 )
 
+'''
+Row('subreddit='funny', ngram='foo bar')
+Row('subreddit='funny', ngram='bar baz')
+Row('subreddit='other', ngram='foo bar')
+->
+Row(ngram='foo bar')
+Row(ngram='bar baz')
+'''
 ngrams = (
     subreddit_ngrams_exploded
         .select('ngram')
         .distinct()
 )
 
+'''
+Row('subreddit='funny', user='bob')
+Row('subreddit='funny', user='fred')
+Row('subreddit='other', user='bob')
+->
+Row(user='bob')
+Row(user='fred')
+'''
 users = (
     subreddit_users
         .select('user')
@@ -105,6 +158,13 @@ users = (
 ngram_index_row = Row('ngram', 'index')
 user_index_row = Row('user', 'index')
 
+'''
+Row(ngram='foo bar')
+Row(ngram='bar baz')
+->
+Row(ngram='foo bar', index=0)
+Row(ngram='bar baz', index=1)
+'''
 ngram_indices = (
     ngrams
         .rdd
@@ -112,6 +172,14 @@ ngram_indices = (
         .map(lambda n: ngram_index_row(n[0][0], n[1]))
         .toDF()
 )
+
+'''
+Row(user='bob')
+Row(user='fred')
+->
+Row(user='bob', index=0)
+Row(user='fred', index=1)
+'''
 user_indices = (
     users
         .rdd
@@ -120,11 +188,26 @@ user_indices = (
         .toDF()
 )
 
+'''
+converts subreddit ngrams into vector components (index is the dimension)
+Row('subreddit='funny', ngram='foo bar')
+Row('subreddit='funny', ngram='bar baz')
+->
+Row('subreddit='funny', index=0)
+Row('subreddit='funny', index=1)
+'''
 subreddit_ngram_indices = (
     subreddit_ngrams_exploded
         .join(ngram_indices, subreddit_ngrams_exploded.ngram == ngram_indices.ngram)
         .select('subreddit', 'index')
 )
+
+'''
+converts subreddit users into vector components (index is the dimension)
+Row(subreddit='funny', user='bob')
+->
+Row(subreddit='funny', index=0)
+'''
 subreddit_user_indices = (
     subreddit_users
         .join(user_indices, subreddit_users.user == user_indices.user)
@@ -160,10 +243,3 @@ for a,b in combinations(subreddits, 2):
     print 'Comparing %s with %s' % (a,b)
     print '2-gram: %f' % ngram_similarity(a,b)
     print 'user: %f' % user_similarity(a,b)
-
-
-
-
-
-
-
